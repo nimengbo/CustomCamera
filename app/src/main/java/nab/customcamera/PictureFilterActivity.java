@@ -23,6 +23,8 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 
 import nab.customcamera.utils.ImageUtils;
 
@@ -34,10 +36,12 @@ public class PictureFilterActivity extends Activity implements OnClickListener {
         setContentView(R.layout.activity_edit_pic);
         String path = getIntent().getStringExtra("bitmapPath");
         int orientation = ImageUtils.readPictureDegree(path);
+//        SquareImageView squareImageView = (SquareImageView)findViewById(R.id.sImageView);
+//        Bitmap bitmap = BitmapFactory.decodeFile(path);
+//        squareImageView.setImageBitmap(bitmap);
+        ImageView imageView = (ImageView)findViewById(R.id.sImageView);
         Bitmap bitmap = BitmapFactory.decodeFile(path);
-        SquareImageView squareImageView = (SquareImageView)findViewById(R.id.sImageView);
-        squareImageView.setImageBitmap(bitmap);
-        
+        imageView.setImageBitmap(bitmap);
     }
 
     @Override

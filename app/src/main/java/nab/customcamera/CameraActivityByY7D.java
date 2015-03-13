@@ -24,11 +24,13 @@ import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
+import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import java.util.Collections;
@@ -39,27 +41,42 @@ import jp.co.cyberagent.android.gpuimage.GPUImage;
 import nab.customcamera.utils.CameraHelper;
 import nab.customcamera.utils.DensityUtils;
 import nab.customcamera.utils.FileUtils;
+import nab.customcamera.utils.ImageUtils;
 
 
-public class CameraActivity extends Activity implements OnClickListener {
+public class CameraActivityByY7D extends Activity implements OnClickListener {
     private final String TAG = "CameraActivity";
     private GPUImage mGPUImage;
-    private SquareGLSurfaceView squareGLSurfaceView;
+    private GLSurfaceView squareGLSurfaceView;
     private CameraHelper mCameraHelper;
     private CameraLoader mCamera;
     private View rl_top_bar;
+    private View trasView;
+    /**
+     * 图片尺寸
+     */
+    private int pictureWidth;
+    private int pictureHeight;
+    /**
+     * 预览尺寸
+     */
+    private int preViewWidth;
+    private int preViewHeight;
+    private final int bestHeight = 1200; //比较清晰的分辨率
+    private final int bestWidth = 1200;
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_custom_camera);
+        setContentView(R.layout.activity_custom_camera2);
         initView();
     }
 
     public void initView() {
+        trasView = findViewById(R.id.iv_trans);
         rl_top_bar = findViewById(R.id.rl_top_bar);
         mGPUImage = new GPUImage(this);
-        squareGLSurfaceView = (SquareGLSurfaceView) findViewById(R.id.surfaceView);
+        squareGLSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceView);
         mGPUImage.setGLSurfaceView(squareGLSurfaceView);
         mCameraHelper = new CameraHelper(this);
         mCamera = new CameraLoader();
@@ -105,7 +122,7 @@ public class CameraActivity extends Activity implements OnClickListener {
                             if (success) {
                                 takePicture();
                             } else {
-                                Toast.makeText(CameraActivity.this, "对焦失败,请重新拍摄", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CameraActivityByY7D.this, "对焦失败,请重新拍摄", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -118,76 +135,83 @@ public class CameraActivity extends Activity implements OnClickListener {
         }
     }
 
+
     /**
-     * 找一个最佳的图片尺寸
+     * 找到最好的尺寸
      *
-     * @param sizeList
-     * @return
+     * @param preViewSizeList
+     * @param pictureSizeList
      */
-    private Camera.Size getBestPictureSize(List<Camera.Size> sizeList) {
-        Camera.Size size = null;
-        // 优先找一个比例和屏幕一样的尺寸
+    public void getBestSize(List<Camera.Size> preViewSizeList, List<Camera.Size> pictureSizeList) {
+        /**
+         *  最好的方案是 根据屏幕比例 找到 图片尺寸
+         *  再找到预览尺寸 使得 屏幕比 == 图片比 == 预览比 (这种机型太少) 
+         *  以下是根据 宽最接近1200 找的尺寸
+         */
+
+
         //由大到小排序
-        Collections.sort(sizeList, new Comparator<Camera.Size>() {
+        Collections.sort(pictureSizeList, new Comparator<Camera.Size>() {
             @Override
             public int compare(Camera.Size size, Camera.Size size2) {
                 return size2.width - size.width;
             }
         });
-        int screenW = DensityUtils.getScreenWidth(CameraActivity.this);
-        int screenH = DensityUtils.getScreenHeight(CameraActivity.this);
-        int compareWidth = 1200;
-        int compareHeight = 1200;
-        if (mCamera.getmPreViewSize() != null) {
-            compareWidth = mCamera.getmPreViewSize().width;
-            compareHeight = mCamera.getmPreViewSize().height;
-        }
-        final double ratio = 1.0 * Math.max(screenW, screenH) / Math.min(screenW, screenH);
-        for (Camera.Size sz : sizeList) {
-            Log.i(TAG, "SupportedPictureSizes: " + sz.width + "x" + sz.height + " ratio=" + (1.0 * sz.width / sz.height));
-            if (1.0 * sz.width / sz.height == ratio) {
-                if ((sz.width < compareWidth || sz.height < compareHeight) && size != null) {
-                    //小于compareWidth的不再考虑
-                    break;
-                }
-                size = sz;
+        for (int i = pictureSizeList.size() - 1; i >= 0; i--) {
+            if (i < 0) {
+                break;
+            }
+            if (i == 0) {
+                //说明没找到最接近的(相机分辨率太低)
+                pictureHeight = pictureSizeList.get(0).height;
+                pictureWidth = pictureSizeList.get(0).width;
+                Log.d(TAG, "not find match pictuerSize");
+            }
+            //优先找一个和bestHeight最近接的pictureSize.height
+            if (pictureSizeList.get(i - 1).height < bestHeight
+                    && pictureSizeList.get(i).height >= bestHeight) {
+                pictureHeight = pictureSizeList.get(i).height;
+                pictureWidth = pictureSizeList.get(i).width;
+                break;
             }
         }
-        if (size == null) {///比例差
-            double ratioAbs = 9999;
-            //没找到一样的。。找一个接近的
-            Log.i(TAG, "Could't found a SupportedPictureSize which ratio =" + ratio);
-            for (Camera.Size sz : sizeList) {
-                Log.i(TAG, "SupportedPictureSizes: " + sz.width + "x" + sz.height);
-                if (Math.abs(sz.width / sz.height - ratio) < ratioAbs) {
-                    if ((sz.width <= compareWidth || sz.height <= compareHeight) && size != null) {
-                        //小于compareWidth的不再考虑
-                        break;
-                    }
-                    size = sz;
-                }
+        //由大到小排序
+        Collections.sort(preViewSizeList, new Comparator<Camera.Size>() {
+            @Override
+            public int compare(Camera.Size size, Camera.Size size2) {
+                return size2.width - size.width;
+            }
+        });
+        //相机分辨率比
+        final float ratio = 1.0f * pictureHeight / pictureWidth;
+
+        for (int i = 0; i < preViewSizeList.size(); i++) {
+            if (i == preViewSizeList.size() - 1) {
+                //说明没找到最接近的(手机分辨率太低)
+                preViewHeight = preViewSizeList.get(0).height;
+                preViewWidth = preViewSizeList.get(0).width;
+                Log.d(TAG, "not find match preViewSize");
+            }
+            float ratioTemp = (1.0f * preViewSizeList.get(i).height / preViewSizeList.get(i).width);
+            if (ratio == ratioTemp) {
+                preViewHeight = preViewSizeList.get(i).height;
+                preViewWidth = preViewSizeList.get(i).width;
+                break;
             }
         }
-        return size;
+
     }
 
     private void takePicture() {
         // TODO get a size that is about the size of the screen
         Parameters params = mCamera.mCameraInstance.getParameters();
         params.setRotation(90);
-        final Camera.Size size = getBestPictureSize(params.getSupportedPictureSizes());
-        Log.i(TAG, "setPictureSize: " + size.width + "x" + size.height);
-        params.setPictureSize(size.width, size.height);
         mCamera.mCameraInstance.setParameters(params);
         mCamera.mCameraInstance.takePicture(null, null,
                 new Camera.PictureCallback() {
 
                     @Override
                     public void onPictureTaken(byte[] data, final Camera camera) {
-                        int width = squareGLSurfaceView.getWidth();
-                        int height = squareGLSurfaceView.getHeight();
-//                        //由于width == height 是正方形 所以 photoX = Math.abs((size.height - size.width) / 2);
-                        int photoX = Math.abs((size.height - (height * size.width / width)) / 2);
                         Bitmap bitmapTemp = null;
                         if (data != null) {
                             Matrix matrix = new Matrix();
@@ -197,18 +221,29 @@ public class CameraActivity extends Activity implements OnClickListener {
                             } else {
                                 matrix.setRotate(90);
                             }
+
+//                            float scale = 1.0f * preViewHeight / pictureHeight;
+//                            matrix.postScale(scale,scale);
+//                            Log.d(TAG,"scale " + scale);
+//                            int y = pictureHeight - preViewHeight;
+//                            int x = pictureWidth - preViewWidth;
+//                            x /= 2;
+//                            y /= 2;
                             /**
                              * android 默认预览是0°，之前设置过相机为90°，拍完后照片是90°的是横着的
                              * size.width > size.height 实际上照片拍完后再旋转90° size.height是照片的宽
                              * 所以裁剪成正方形要以size.height为边 照片裁剪位置也是以X坐标开始
                              */
+
                             bitmapTemp = BitmapFactory.decodeByteArray(data, 0, data.length);
-                            bitmapTemp = Bitmap.createBitmap(bitmapTemp,
-                                    0, 0, height, height, matrix, false);
+                            Log.d("CameraActivity", "decodeByteArray bitmapTemp.width : " + bitmapTemp.getWidth()
+                                    + " bitmapTemp.height : " + bitmapTemp.getHeight());
+                            bitmapTemp = Bitmap.createBitmap(bitmapTemp, 0, 0,
+                                    bitmapTemp.getWidth(), bitmapTemp.getHeight(), matrix, false);
                             Log.d("CameraActivity", "bitmapTemp.width : " + bitmapTemp.getWidth()
                                     + " bitmapTemp.height : " + bitmapTemp.getHeight());
                             String path = FileUtils.saveBitmapToLocal(bitmapTemp);
-                            Intent intent = new Intent(CameraActivity.this, PictureFilterActivity.class);
+                            Intent intent = new Intent(CameraActivityByY7D.this, PictureFilterActivity.class);
                             intent.putExtra("bitmapPath", path);
                             startActivity(intent);
                             if (!bitmapTemp.isRecycled()) {
@@ -249,69 +284,22 @@ public class CameraActivity extends Activity implements OnClickListener {
             setUpCamera(mCurrentCameraId);
         }
 
-        /**
-         * 找一个最佳的预览尺寸
-         *
-         * @param sizeList
-         * @return
-         */
-        private Camera.Size getBestPreviewSize(List<Camera.Size> sizeList) {
-            Camera.Size size = null;
-            // 优先找一个比例和屏幕一样的尺寸
-            //由大到小排序
-            Collections.sort(sizeList, new Comparator<Camera.Size>() {
-                @Override
-                public int compare(Camera.Size size, Camera.Size size2) {
-                    return size2.width - size.width;
-                }
-            });
-            int screenW = DensityUtils.getScreenWidth(CameraActivity.this);
-            int screenH = DensityUtils.getScreenHeight(CameraActivity.this);
-            final double ratio = 1.0 * Math.max(screenW, screenH) / Math.min(screenW, screenH);
-            for (Camera.Size sz : sizeList) {
-                Log.i(TAG, "SupportedPreviewSizes: " + sz.width + "x" + sz.height + " ratio=" + (1.0 * sz.width / sz.height));
-                if (1.0 * sz.width / sz.height == ratio) {
-                    if (sz.width < 1000) {
-                        //小于1000即可，不继续找
-                        break;
-                    }
-                    size = sz;
-                }
-            }
-            if (size == null) {
-                //比例差
-                double ratioAbs = 9999;
-                //没找到一样的。。找一个接近的
-                Log.i(TAG, "Could't found a SupportedPreviewSize which ratio =" + ratio);
-                for (Camera.Size sz : sizeList) {
-                    Log.i(TAG, "SupportedPreviewSizes: " + sz.width + "x" + sz.height);
-                    if (Math.abs(sz.width / sz.height - ratio) < ratioAbs) {
-                        if (sz.width < 1000) {
-                            //小于1000即可，不继续找
-                            break;
-                        }
-                        size = sz;
-                    }
-                }
-            }
-            return size;
-        }
 
         private void setUpCamera(final int id) {
             mCameraInstance = getCameraInstance(id);
             Parameters parameters = mCameraInstance.getParameters();
             // TODO adjust by getting supportedPreviewSizes and then choosing
             // the best one for screen size (best fill screen)
+            Log.i(TAG, "screenSize: " + DensityUtils.getScreenHeight(CameraActivityByY7D.this)
+                    + "x" + DensityUtils.getScreenWidth(CameraActivityByY7D.this));
             int bestW = 0;
             int bestH = 0;
-            Camera.Size size = getBestPreviewSize(parameters.getSupportedPreviewSizes());
-            if (size != null) {
-                mPreViewSize = size;
-                bestW = size.width;
-                bestH = size.height;
-            }
-            Log.i(TAG, "setPreviewSize: " + bestW + "x" + bestH);
-            parameters.setPreviewSize(bestW, bestH);
+            getBestSize(parameters.getSupportedPreviewSizes(), parameters.getSupportedPictureSizes());
+
+            Log.i(TAG, "setPreviewSize: " + preViewWidth + "x" + preViewHeight);
+            Log.i(TAG, "setPictureSize: " + pictureWidth + "x" + pictureHeight);
+            parameters.setPreviewSize(preViewWidth, preViewHeight);
+            parameters.setPictureSize(pictureWidth, pictureHeight);
 
             if (parameters.getSupportedFocusModes().contains(
                     Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)) {
@@ -322,7 +310,7 @@ public class CameraActivity extends Activity implements OnClickListener {
             }
             mCameraInstance.setParameters(parameters);
             int orientation = mCameraHelper.getCameraDisplayOrientation(
-                    CameraActivity.this, mCurrentCameraId);
+                    CameraActivityByY7D.this, mCurrentCameraId);
             CameraHelper.CameraInfo2 cameraInfo = new CameraHelper.CameraInfo2();
             mCameraHelper.getCameraInfo(mCurrentCameraId, cameraInfo);
             boolean flipHorizontal = cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT;
