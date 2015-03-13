@@ -233,10 +233,6 @@ public class CameraActivity extends Activity implements OnClickListener {
                             Log.d("CameraActivity", "decodeByteArray bitmapTemp.width : " + bitmapTemp.getWidth()
                                     + " bitmapTemp.height : " + bitmapTemp.getHeight());
                             bitmapTemp = Bitmap.createBitmap(bitmapTemp, 0, 0, bitmapTemp.getWidth(), bitmapTemp.getHeight(), matrix, false);
-
-
-                            Log.d("CameraActivity", "bitmapTemp.width : " + bitmapTemp.getWidth()
-                                    + " bitmapTemp.height : " + bitmapTemp.getHeight());
                             ImageView displayImageView = (ImageView) findViewById(R.id.iv_display);
                             displayImageView.setImageBitmap(bitmapTemp);
                             cropBitmapFromScreen();
@@ -259,6 +255,8 @@ public class CameraActivity extends Activity implements OnClickListener {
         int width = DensityUtils.getScreenWidth(this);
         int top = rl_top_bar.getHeight() + DensityUtils.getBarHeight(this);
         bitmap = Bitmap.createBitmap(bitmap,0,top,width,width);
+        Log.d("CameraActivity", "bitmapTemp.width : " + bitmap.getWidth()
+                + " bitmapTemp.height : " + bitmap.getHeight());
         String path = FileUtils.saveBitmapToLocal(bitmap);
         
         Intent intent = new Intent(CameraActivity.this, PictureFilterActivity2.class);
