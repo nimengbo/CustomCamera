@@ -41,10 +41,9 @@ import jp.co.cyberagent.android.gpuimage.GPUImage;
 import nab.customcamera.utils.CameraHelper;
 import nab.customcamera.utils.DensityUtils;
 import nab.customcamera.utils.FileUtils;
-import nab.customcamera.utils.ImageUtils;
 
 
-public class CameraActivityByY7D extends Activity implements OnClickListener {
+public class CameraActivity extends Activity implements OnClickListener {
     private final String TAG = "CameraActivity";
     private GPUImage mGPUImage;
     private GLSurfaceView squareGLSurfaceView;
@@ -52,6 +51,7 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
     private CameraLoader mCamera;
     private View rl_top_bar;
     private View trasView;
+    private ImageView displayImageView;
     /**
      * 图片尺寸
      */
@@ -68,11 +68,12 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_custom_camera2);
+        setContentView(R.layout.activity_custom_camera);
         initView();
     }
 
     public void initView() {
+        displayImageView = (ImageView) findViewById(R.id.iv_display);
         trasView = findViewById(R.id.iv_trans);
         rl_top_bar = findViewById(R.id.rl_top_bar);
         mGPUImage = new GPUImage(this);
@@ -122,7 +123,7 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
                             if (success) {
                                 takePicture();
                             } else {
-                                Toast.makeText(CameraActivityByY7D.this, "对焦失败,请重新拍摄", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(CameraActivity.this, "对焦失败,请重新拍摄", Toast.LENGTH_SHORT).show();
                             }
                         }
                     });
@@ -193,6 +194,7 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
                 Log.d(TAG, "not find match preViewSize");
             }
             float ratioTemp = (1.0f * preViewSizeList.get(i).height / preViewSizeList.get(i).width);
+            //比例相等，并且一定比图片尺寸小或等
             if (ratio == ratioTemp && preViewSizeList.get(i).height <= pictureHeight) {
                 preViewHeight = preViewSizeList.get(i).height;
                 preViewWidth = preViewSizeList.get(i).width;
@@ -221,14 +223,6 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
                             } else {
                                 matrix.setRotate(90);
                             }
-
-//                            float scale = 1.0f * preViewHeight / pictureHeight;
-//                            matrix.postScale(scale,scale);
-//                            Log.d(TAG,"scale " + scale);
-//                            int y = pictureHeight - preViewHeight;
-//                            int x = pictureWidth - preViewWidth;
-//                            x /= 2;
-//                            y /= 2;
                             /**
                              * android 默认预览是0°，之前设置过相机为90°，拍完后照片是90°的是横着的
                              * size.width > size.height 实际上照片拍完后再旋转90° size.height是照片的宽
@@ -238,23 +232,40 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
                             bitmapTemp = BitmapFactory.decodeByteArray(data, 0, data.length);
                             Log.d("CameraActivity", "decodeByteArray bitmapTemp.width : " + bitmapTemp.getWidth()
                                     + " bitmapTemp.height : " + bitmapTemp.getHeight());
-                            bitmapTemp = Bitmap.createBitmap(bitmapTemp, 0, 0,
-                                    bitmapTemp.getWidth(), bitmapTemp.getHeight(), matrix, false);
+                            bitmapTemp = Bitmap.createBitmap(bitmapTemp, 0, 0, bitmapTemp.getWidth(), bitmapTemp.getHeight(), matrix, false);
+
+
                             Log.d("CameraActivity", "bitmapTemp.width : " + bitmapTemp.getWidth()
                                     + " bitmapTemp.height : " + bitmapTemp.getHeight());
-                            String path = FileUtils.saveBitmapToLocal(bitmapTemp);
-                            Intent intent = new Intent(CameraActivityByY7D.this, PictureFilterActivity.class);
-                            intent.putExtra("bitmapPath", path);
-                            startActivity(intent);
-                            if (!bitmapTemp.isRecycled()) {
-                                bitmapTemp.recycle();
-                                bitmapTemp = null;
-                            }
+                            ImageView displayImageView = (ImageView) findViewById(R.id.iv_display);
+                            displayImageView.setImageBitmap(bitmapTemp);
+                            cropBitmapFromScreen();
+//                            String path = FileUtils.saveBitmapToLocal(bitmapTemp);
+//                            Intent intent = new Intent(CameraActivity.this, PictureFilterActivity2.class);
+//                            intent.putExtra("bitmapPath", path);
+//                            startActivity(intent);
                         }
                     }
                 });
     }
 
+    private void cropBitmapFromScreen() {
+        View decorview = this.getWindow().getDecorView();
+        decorview.setDrawingCacheEnabled(true);
+
+        decorview.buildDrawingCache();
+
+        Bitmap bitmap = decorview.getDrawingCache();
+        int width = DensityUtils.getScreenWidth(this);
+        int top = rl_top_bar.getHeight() + DensityUtils.getBarHeight(this);
+        bitmap = Bitmap.createBitmap(bitmap,0,top,width,width);
+        String path = FileUtils.saveBitmapToLocal(bitmap);
+        
+        Intent intent = new Intent(CameraActivity.this, PictureFilterActivity2.class);
+        intent.putExtra("bitmapPath", path);
+        startActivity(intent);
+
+    }
 
     private class CameraLoader {
 
@@ -275,6 +286,7 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
         }
 
         public void onPause() {
+            displayImageView.setImageBitmap(null);
             releaseCamera();
         }
 
@@ -290,8 +302,8 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
             Parameters parameters = mCameraInstance.getParameters();
             // TODO adjust by getting supportedPreviewSizes and then choosing
             // the best one for screen size (best fill screen)
-            Log.i(TAG, "screenSize: " + DensityUtils.getScreenHeight(CameraActivityByY7D.this)
-                    + "x" + DensityUtils.getScreenWidth(CameraActivityByY7D.this));
+            Log.i(TAG, "screenSize: " + DensityUtils.getScreenHeight(CameraActivity.this)
+                    + "x" + DensityUtils.getScreenWidth(CameraActivity.this));
             int bestW = 0;
             int bestH = 0;
             getBestSize(parameters.getSupportedPreviewSizes(), parameters.getSupportedPictureSizes());
@@ -310,7 +322,7 @@ public class CameraActivityByY7D extends Activity implements OnClickListener {
             }
             mCameraInstance.setParameters(parameters);
             int orientation = mCameraHelper.getCameraDisplayOrientation(
-                    CameraActivityByY7D.this, mCurrentCameraId);
+                    CameraActivity.this, mCurrentCameraId);
             CameraHelper.CameraInfo2 cameraInfo = new CameraHelper.CameraInfo2();
             mCameraHelper.getCameraInfo(mCurrentCameraId, cameraInfo);
             boolean flipHorizontal = cameraInfo.facing == CameraInfo.CAMERA_FACING_FRONT;

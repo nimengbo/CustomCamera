@@ -27,19 +27,15 @@ import android.widget.ImageView;
 import nab.customcamera.utils.ImageUtils;
 
 
-public class PictureFilterActivity extends Activity implements OnClickListener {
+public class PictureFilterActivity2 extends Activity implements OnClickListener {
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_edit_pic);
+        setContentView(R.layout.activity_edit_pic2);
         String path = getIntent().getStringExtra("bitmapPath");
-        int orientation = ImageUtils.readPictureDegree(path);
-//        SquareImageView squareImageView = (SquareImageView)findViewById(R.id.sImageView);
-//        Bitmap bitmap = BitmapFactory.decodeFile(path);
-//        squareImageView.setImageBitmap(bitmap);
-        ImageView imageView = (ImageView)findViewById(R.id.iv_trans);
+        SquareImageView squareImageView = (SquareImageView)findViewById(R.id.iv_trans);
         Bitmap bitmap = BitmapFactory.decodeFile(path);
-        imageView.setImageBitmap(bitmap);
+        squareImageView.setImageBitmap(bitmap);
     }
 
     @Override
