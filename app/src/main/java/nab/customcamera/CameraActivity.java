@@ -155,6 +155,10 @@ public class CameraActivity extends Activity implements OnClickListener {
         Collections.sort(pictureSizeList, new Comparator<Camera.Size>() {
             @Override
             public int compare(Camera.Size size, Camera.Size size2) {
+                //宽相等按高降序
+                if(size2.width == size.width){
+                    return size2.height - size.height;
+                }
                 return size2.width - size.width;
             }
         });
@@ -176,10 +180,15 @@ public class CameraActivity extends Activity implements OnClickListener {
                 break;
             }
         }
+
         //由大到小排序
         Collections.sort(preViewSizeList, new Comparator<Camera.Size>() {
             @Override
             public int compare(Camera.Size size, Camera.Size size2) {
+                //宽相等按高降序
+                if(size2.width == size.width){
+                    return size2.height - size.height;
+                }
                 return size2.width - size.width;
             }
         });
