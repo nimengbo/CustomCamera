@@ -236,10 +236,6 @@ public class CameraActivity extends Activity implements OnClickListener {
                             ImageView displayImageView = (ImageView) findViewById(R.id.iv_display);
                             displayImageView.setImageBitmap(bitmapTemp);
                             cropBitmapFromScreen();
-//                            String path = FileUtils.saveBitmapToLocal(bitmapTemp);
-//                            Intent intent = new Intent(CameraActivity.this, PictureFilterActivity2.class);
-//                            intent.putExtra("bitmapPath", path);
-//                            startActivity(intent);
                         }
                     }
                 });
@@ -259,7 +255,7 @@ public class CameraActivity extends Activity implements OnClickListener {
                 + " bitmapTemp.height : " + bitmap.getHeight());
         String path = FileUtils.saveBitmapToLocal(bitmap);
         
-        Intent intent = new Intent(CameraActivity.this, PictureFilterActivity2.class);
+        Intent intent = new Intent(CameraActivity.this, PictureFilterActivity.class);
         intent.putExtra("bitmapPath", path);
         startActivity(intent);
 

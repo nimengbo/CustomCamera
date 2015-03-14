@@ -19,7 +19,7 @@
         <activity android:name=".PictureFilterActivity"
             android:screenOrientation="portrait"
             />
-        <activity android:name=".PictureFilterActivity2"
+        <activity android:name=".PictureFilterActivity"
             android:screenOrientation="portrait"
             />
     </application>
