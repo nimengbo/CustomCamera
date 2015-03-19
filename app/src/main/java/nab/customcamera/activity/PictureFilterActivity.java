@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package nab.customcamera;
+package nab.customcamera.activity;
 
 import android.app.Activity;
 import android.graphics.Bitmap;
@@ -22,6 +22,9 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+
+import nab.customcamera.R;
+import nab.customcamera.SquareImageView;
 
 
 public class PictureFilterActivity extends Activity implements OnClickListener {

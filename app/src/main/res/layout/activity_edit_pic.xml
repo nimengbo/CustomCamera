@@ -25,7 +25,6 @@
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:layout_below="@id/rl_top_bar"
-        android:scaleType="centerCrop"
         android:background="@android:color/transparent"
         android:src="@android:color/transparent" />
 
@@ -35,7 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@id/iv_trans"
-        android:background="@android:color/black">
+        android:background="@android:color/holo_green_dark">
 
         <TextView
             android:layout_width="wrap_content"

@@ -14,18 +14,24 @@
  * limitations under the License.
  */
 
-package nab.customcamera;
+package nab.customcamera.activity;
 
 import android.app.Activity;
+import android.content.ContentResolver;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.hardware.Camera;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Parameters;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.os.Handler;
+import android.provider.MediaStore;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +44,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import jp.co.cyberagent.android.gpuimage.GPUImage;
+import nab.customcamera.R;
 import nab.customcamera.utils.CameraHelper;
 import nab.customcamera.utils.DensityUtils;
 import nab.customcamera.utils.FileUtils;
@@ -45,13 +52,14 @@ import nab.customcamera.utils.FileUtils;
 
 public class CameraActivity extends Activity implements OnClickListener {
     private final String TAG = "CameraActivity";
+    private final static String IMAGE_PATH = "image_path";
     private GPUImage mGPUImage;
     private GLSurfaceView squareGLSurfaceView;
     private CameraHelper mCameraHelper;
     private CameraLoader mCamera;
     private View rl_top_bar;
-    private View trasView;
     private ImageView displayImageView;
+    private ImageView iv_album;
     /**
      * 图片尺寸
      */
@@ -64,6 +72,8 @@ public class CameraActivity extends Activity implements OnClickListener {
     private int preViewHeight;
     private final int bestHeight = 1200; //比较清晰的分辨率
     private final int bestWidth = 1200;
+    
+    
 
     @Override
     public void onCreate(final Bundle savedInstanceState) {
@@ -73,8 +83,9 @@ public class CameraActivity extends Activity implements OnClickListener {
     }
 
     public void initView() {
+        iv_album = (ImageView) findViewById(R.id.iv_album);
+        iv_album.setOnClickListener(this);
         displayImageView = (ImageView) findViewById(R.id.iv_display);
-        trasView = findViewById(R.id.iv_trans);
         rl_top_bar = findViewById(R.id.rl_top_bar);
         mGPUImage = new GPUImage(this);
         squareGLSurfaceView = (GLSurfaceView) findViewById(R.id.surfaceView);
@@ -101,13 +112,16 @@ public class CameraActivity extends Activity implements OnClickListener {
     protected void onResume() {
         super.onResume();
         mCamera.onResume();
+        Log.d(TAG,"onResume");
     }
 
     @Override
     protected void onPause() {
         mCamera.onPause();
         super.onPause();
+        Log.d(TAG,"onPause");
     }
+
 
     @Override
     public void onClick(final View v) {
@@ -133,6 +147,10 @@ public class CameraActivity extends Activity implements OnClickListener {
             case R.id.iv_switch_camera:
                 mCamera.switchCamera();
                 break;
+//            //从相册打开
+//            case R.id.iv_album:
+//                getImageFromAlbum();
+//                break;
         }
     }
 
@@ -250,6 +268,9 @@ public class CameraActivity extends Activity implements OnClickListener {
                 });
     }
 
+    /**
+     * 截屏，然后根据高度截取正方形的图
+     */
     private void cropBitmapFromScreen() {
         View decorview = this.getWindow().getDecorView();
         decorview.setDrawingCacheEnabled(true);
@@ -258,7 +279,8 @@ public class CameraActivity extends Activity implements OnClickListener {
 
         Bitmap bitmap = decorview.getDrawingCache();
         int width = DensityUtils.getScreenWidth(this);
-        int top = rl_top_bar.getHeight() + DensityUtils.getBarHeight(this);
+        //+ DensityUtils.getBarHeight(this);
+        int top = rl_top_bar.getHeight() ;
         bitmap = Bitmap.createBitmap(bitmap,0,top,width,width);
         Log.d("CameraActivity", "bitmapTemp.width : " + bitmap.getWidth()
                 + " bitmapTemp.height : " + bitmap.getHeight());
@@ -274,11 +296,6 @@ public class CameraActivity extends Activity implements OnClickListener {
 
         private int mCurrentCameraId = 0;
         private Camera mCameraInstance;
-        private Camera.Size mPreViewSize;
-
-        public Camera.Size getmPreViewSize() {
-            return mPreViewSize;
-        }
 
         public int getmCurrentCameraId() {
             return mCurrentCameraId;
@@ -307,10 +324,7 @@ public class CameraActivity extends Activity implements OnClickListener {
             // the best one for screen size (best fill screen)
             Log.i(TAG, "screenSize: " + DensityUtils.getScreenHeight(CameraActivity.this)
                     + "x" + DensityUtils.getScreenWidth(CameraActivity.this));
-            int bestW = 0;
-            int bestH = 0;
             getBestSize(parameters.getSupportedPreviewSizes(), parameters.getSupportedPictureSizes());
-
             Log.i(TAG, "setPreviewSize: " + preViewWidth + "x" + preViewHeight);
             Log.i(TAG, "setPictureSize: " + pictureWidth + "x" + pictureHeight);
             parameters.setPreviewSize(preViewWidth, preViewHeight);
@@ -346,6 +360,7 @@ public class CameraActivity extends Activity implements OnClickListener {
         }
 
         private void releaseCamera() {
+            
             mCameraInstance.setPreviewCallback(null);
             mCameraInstance.release();
             mCameraInstance = null;

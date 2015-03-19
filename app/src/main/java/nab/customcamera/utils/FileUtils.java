@@ -3,12 +3,16 @@
  */
 package nab.customcamera.utils;
 
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.CompressFormat;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.StatFs;
+import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 import android.util.Log;
@@ -775,36 +779,6 @@ public class FileUtils {
             tempOutputStream.close();
         }
         zipInput.close();
-
-//        Log.d(TAG, "unZipFile " + zipFile.getAbsolutePath() + " To " + descDir.getAbsolutePath());
-//        if (!descDir.exists()) {
-//            Log.d(TAG, "mkdirs: " + descDir.getAbsolutePath());
-//            descDir.mkdirs();
-//        }
-//        ZipFile zip = new ZipFile(zipFile);
-//        ZipInputStream zipInputStream = new ZipInputStream(
-//                new BufferedInputStream(new FileInputStream(zipFile)));
-//        ZipEntry entry = null;
-//        while ((entry = zipInputStream.getNextEntry()) != null) {
-//            String zipEntryName = entry.getName();
-//            InputStream in = zip.getInputStream(entry);
-//            String outPath = new File(descDir, zipEntryName).getAbsolutePath();// (descDir + zipEntryName).replaceAll("\\*", "/");
-//            File outputFile = new File(outPath);
-//            //判断路径是否存在,不存在则创建文件路径
-//            File file = new File(outPath.substring(0, outPath.lastIndexOf('/')));
-//            Log.d(TAG, "Extract: " + outPath);
-//            //检查目录是否存在
-//            if (!file.exists()) {
-//                Log.d(TAG, "mkdirs: " + file.getAbsolutePath());
-//                file.mkdirs();
-//            }
-//            //判断文件全路径是否为文件夹,如果是,不解压
-//            if (outputFile.isDirectory()) {
-//                Log.d(TAG, "Dir: " + outPath + " exist, extract abort.");
-//                continue;
-//            }
-//            copy(in, outputFile);
-//        }
     }
 
     /**
@@ -826,7 +800,5 @@ public class FileUtils {
         in.close();
         return content.toString();
     }
-
-
 
 }
