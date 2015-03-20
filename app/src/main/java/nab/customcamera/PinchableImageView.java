@@ -171,6 +171,7 @@ public class PinchableImageView extends ImageView {
             Log.d(TAG,minScale + "");
         }
         Log.d(TAG,w + "x" + h);
+        Log.d(TAG,"setRect : (  " + l + ","+ t + "," + (l + w)  + "," +(t + h));
         layout(l, t, l + w, t + h);
     }
 
@@ -423,6 +424,7 @@ public class PinchableImageView extends ImageView {
      * 实现处理拖动
      */
     private void setPosition(int left, int top, int right, int bottom) {
+        Log.d(TAG,"position : (  " + left + ","+ top + "," + right + "," +bottom);
         this.layout(left, top, right, bottom);
     }
 }
