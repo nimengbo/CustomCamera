@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="#A0DDDDDD" >
+
+    <TextView
+        android:id="@+id/tv_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:text="正在努力加载中"
+        android:textColor="@android:color/black"
+        android:textSize="16sp" />
+    <ImageView
+        android:id="@+id/iv_loading_logo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_above="@id/tv_message"
+        android:layout_centerHorizontal="true"
+        android:src="@anim/ic_loading_logo" />
+
+
+</RelativeLayout>

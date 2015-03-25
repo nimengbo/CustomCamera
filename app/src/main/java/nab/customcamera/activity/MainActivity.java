@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 
 import nab.customcamera.R;
+import nab.customcamera.view.LoadingDialog;
 
 /**
  * Created by Abner on 15/3/19.
@@ -34,6 +35,8 @@ public class MainActivity extends Activity implements View.OnClickListener {
     public void initView() {
         findViewById(R.id.tv_open_camera).setOnClickListener(this);
         findViewById(R.id.tv_open_album).setOnClickListener(this);
+        LoadingDialog loadingDialog = new LoadingDialog(this);
+        loadingDialog.show();
     }
 
     @Override

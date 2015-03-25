@@ -23,24 +23,47 @@ import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 
+import jp.co.cyberagent.android.gpuimage.GPUImageFilter;
+import nab.customcamera.GPUImageFilterTools;
 import nab.customcamera.R;
+import nab.customcamera.SGPUImageView;
 import nab.customcamera.SquareImageView;
 
 
 public class PictureFilterActivity extends Activity implements OnClickListener {
+    SGPUImageView mGPUImageView;
+    private GPUImageFilter mFilter;
     @Override
     public void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_pic);
         String path = getIntent().getStringExtra("bitmapPath");
-        SquareImageView squareImageView = (SquareImageView)findViewById(R.id.iv_trans);
+        mGPUImageView = (SGPUImageView)findViewById(R.id.iv_trans);
         Bitmap bitmap = BitmapFactory.decodeFile(path);
-        squareImageView.setImageBitmap(bitmap);
+        mGPUImageView.setImage(bitmap);
+        findViewById(R.id.tv_filter).setOnClickListener(this);
     }
 
     @Override
     public void onClick(final View v) {
         switch (v.getId()) {
+            case R.id.tv_filter:
+                GPUImageFilterTools.showDialog(this, new GPUImageFilterTools.OnGpuImageFilterChosenListener() {
+
+                    @Override
+                    public void onGpuImageFilterChosenListener(final GPUImageFilter filter) {
+                        switchFilterTo(filter);
+                        mGPUImageView.requestRender();
+                    }
+                });
+                break;
+        }
+    }
+    private void switchFilterTo(final GPUImageFilter filter) {
+        if (mFilter == null
+                || (filter != null && !mFilter.getClass().equals(filter.getClass()))) {
+            mFilter = filter;
+            mGPUImageView.setFilter(mFilter);
         }
     }
 }
